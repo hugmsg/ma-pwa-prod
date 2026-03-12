@@ -23,51 +23,56 @@
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbxS_mETz7WywNVItPN6yYvTRT1h0eQfvJGORH54HCPaKeeAYviBzZt1Jhipduqf09ay/exec?action=production";
 
-        async function fetchData() {
-            try {
-                const response = await fetch(API_URL);
-                const data = await response.json();
-                renderCards(data);
-            } catch (err) {
-                console.error("Erreur de chargement", err);
-            } finally {
-                document.getElementById('loader').classList.add('hidden');
-            }
+
+async function fetchData() {
+    const loader = document.getElementById('loader');
+    const container = document.getElementById('cards-container');
+    
+    try {
+        console.log("Tentative d'accès à :", API_URL);
+        const response = await fetch(API_URL);
+        
+        if (!response.ok) throw new Error("Erreur réseau");
+        
+        const data = await response.json();
+        console.log("Données reçues :", data);
+
+        if (data.length === 0) {
+            container.innerHTML = "<p class='text-center col-span-full'>Aucune donnée trouvée (Vérifiez les cases cochées en colonne R ou que la ligne 7 n'est pas vide).</p>";
+        } else {
+            renderCards(data);
         }
+    } catch (err) {
+        console.error("Erreur détaillée :", err);
+        container.innerHTML = `<p class='text-red-500 text-center col-span-full'>Erreur : ${err.message}. Vérifiez la console (F12).</p>`;
+    } finally {
+        loader.classList.add('hidden');
+    }
+}
 
-        function renderCards(items) {
-            const container = document.getElementById('cards-container');
-            container.innerHTML = items.map(item => `
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow">
-                    <div class="flex justify-between items-start mb-3">
-                        <span class="text-xs font-semibold uppercase tracking-wider text-gray-500">Produit #${item.id}</span>
-                        <a href="${item.lienDrive}" target="_blank" class="text-blue-500 hover:text-blue-700">
-                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg>
-                            Photos Drive
-                        </a>
-                    </div>
-                    
-                    <div class="flex flex-wrap gap-2 mb-4 text-[10px]">
-                        ${badge(item.status.enCours, 'En cours', 'yellow')}
-                        ${badge(item.status.aControler, 'À Contrôler', 'orange')}
-                        ${badge(item.status.termine, 'Terminé', 'green')}
-                        ${badge(item.status.mail, 'Mail', 'blue')}
-                        ${badge(item.status.cmd, 'CMD', 'purple')}
-                    </div>
+function renderCards(items) {
+    const container = document.getElementById('cards-container');
+    container.innerHTML = items.map(item => `
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div class="flex justify-between items-start mb-3">
+                <span class="font-bold text-blue-800">${item.valeurA || 'Sans nom'}</span>
+                <a href="${item.lienDrive}" target="_blank" class="text-blue-500 text-sm underline">Dossier Drive</a>
+            </div>
+            
+            <div class="flex flex-wrap gap-1 mb-4">
+                ${item.status.enCours ? '<span class="bg-yellow-100 text-yellow-800 text-[10px] px-2 py-1 rounded">En cours</span>' : ''}
+                ${item.status.aControler ? '<span class="bg-orange-100 text-orange-800 text-[10px] px-2 py-1 rounded">À contrôler</span>' : ''}
+                ${item.status.termine ? '<span class="bg-green-100 text-green-800 text-[10px] px-2 py-1 rounded">Terminé</span>' : ''}
+            </div>
 
-                    <div class="border-t pt-3 text-sm text-gray-600">
-                        <p>Refs: ${item.details.join(' | ')}</p>
-                    </div>
-                </div>
-            `).join('');
-        }
+            <div class="text-xs text-gray-500 border-t pt-2">
+                ${item.refs.filter(r => r !== "").join(' • ')}
+            </div>
+        </div>
+    `).join('');
+}
 
-        function badge(status, label, color) {
-            if (!status) return '';
-            return `<span class="px-2 py-1 rounded bg-${color}-100 text-${color}-800 font-bold">${label}</span>`;
-        }
-
-        fetchData();
+fetchData();
     </script>
 </body>
 </html>
