@@ -60,9 +60,9 @@ function renderCards(items) {
             </div>
             <p class="text-sm text-gray-500 mb-3">${item.sousTitre || ''}</p>
             <div class="flex flex-wrap gap-1 mb-4">
-                ${item.status.enCours ? '<span class="bg-yellow-100 text-yellow-800 text-[10px] px-2 py-1 rounded">En cours</span>' : ''}
-                ${item.status.aControler ? '<span class="bg-orange-100 text-orange-800 text-[10px] px-2 py-1 rounded">À contrôler</span>' : ''}
-                ${item.status.termine ? '<span class="bg-green-100 text-green-800 text-[10px] px-2 py-1 rounded">Terminé</span>' : ''}
+                ${badge(item.status.enCours, 'En cours', 'yellow')}
+                ${badge(item.status.aControler, 'À contrôler', 'orange')}
+                ${badge(item.status.termine, 'Terminé', 'green')}
                 ${badge(item.status.mail, 'Mail', 'blue')}
                 ${badge(item.status.cmd, 'Cmd', 'purple')}
                 ${badge(item.status.deCote, 'De côté', 'gray')}
