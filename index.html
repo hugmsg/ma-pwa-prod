@@ -95,7 +95,7 @@
                                 </a>
                             ` : `<span class="p-2 text-gray-200"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" opacity="0.3"></path></svg></span>`}
                         </div>
-
+                        <p class="text-sm text-gray-500 mb-3">${item.sousTitre || ''}</p>
                         <div class="flex flex-wrap gap-1.5 mb-4">
                             ${getBadge(item.status.enCours, 'En cours', 'bg-yellow-100 text-yellow-700')}
                             ${getBadge(item.status.aControler, 'À Contrôler', 'bg-orange-100 text-orange-700')}
