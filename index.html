@@ -22,7 +22,9 @@
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbyzLdvtSTlJmAN_4Lss-5D5-gTdIYlCR2dA-OVS6Xy47DhFkfIcFcWDnFNPq1TbMr3-/exec?action=production";
-
+        const lienValide = (item.lienDrive && item.lienDrive.toString().startsWith('http')) 
+            ? item.lienDrive 
+            : `https://${item.lienDrive}`;
 
 async function fetchData() {
     const loader = document.getElementById('loader');
@@ -57,6 +59,19 @@ function renderCards(items) {
             <div class="flex justify-between items-start mb-3">
                 <span class="font-bold text-blue-800">${item.codemodule || 'Sans nom'}</span>
                 <a href="${item.lienDrive}" target="_blank" class="text-blue-500 text-sm underline">Dossier Drive</a>
+                ${item.lienDrive ? `
+            <a href="${item.lienDrive.toString().startsWith('http') ? item.lienDrive : 'https://' + item.lienDrive}" 
+               target="_blank" 
+               rel="noopener noreferrer"
+               class="text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                </svg>
+            </a>
+        ` : `<span class="text-gray-300 p-2" title="Pas de lien">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" opacity="0.3"></path></svg>
+             </span>`}
+    </div>
             </div>
             <p class="text-sm text-gray-500 mb-3">${item.sousTitre || ''}</p>
             <div class="flex flex-wrap gap-1 mb-4">
