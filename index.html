@@ -55,7 +55,7 @@ function renderCards(items) {
     container.innerHTML = items.map(item => `
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
             <div class="flex justify-between items-start mb-3">
-                <span class="font-bold text-blue-800">${item.valeurA || 'Sans nom'}</span>
+                <span class="font-bold text-blue-800">${item.codemodule || 'Sans nom'}</span>
                 <a href="${item.lienDrive}" target="_blank" class="text-blue-500 text-sm underline">Dossier Drive</a>
             </div>
             
