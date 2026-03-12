@@ -58,11 +58,14 @@ function renderCards(items) {
                 <span class="font-bold text-blue-800">${item.codemodule || 'Sans nom'}</span>
                 <a href="${item.lienDrive}" target="_blank" class="text-blue-500 text-sm underline">Dossier Drive</a>
             </div>
-            
+            <p class="text-sm text-gray-500 mb-3">${item.sousTitre || ''}</p>
             <div class="flex flex-wrap gap-1 mb-4">
                 ${item.status.enCours ? '<span class="bg-yellow-100 text-yellow-800 text-[10px] px-2 py-1 rounded">En cours</span>' : ''}
                 ${item.status.aControler ? '<span class="bg-orange-100 text-orange-800 text-[10px] px-2 py-1 rounded">À contrôler</span>' : ''}
                 ${item.status.termine ? '<span class="bg-green-100 text-green-800 text-[10px] px-2 py-1 rounded">Terminé</span>' : ''}
+                ${badge(item.status.mail, 'Mail', 'blue')}
+                ${badge(item.status.cmd, 'Cmd', 'purple')}
+                ${badge(item.status.deCote, 'De côté', 'gray')}
             </div>
 
             <div class="text-xs text-gray-500 border-t pt-2">
