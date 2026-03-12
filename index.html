@@ -3,106 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion de Production</title>
+    <title>Prod Manager PWA</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="manifest" href="/manifest.json">
+    <style>
+        /* Optimisation pour mobile : évite le zoom sur les inputs */
+        input { font-size: 16px !important; }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+    </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gray-100 min-h-screen font-sans antialiased text-gray-900">
 
-    <nav class="bg-blue-600 p-4 text-white shadow-lg sticky top-0 z-10">
-        <h1 class="text-xl font-bold text-center">Suivi de Production</h1>
-    </nav>
-
-    <div id="app" class="p-4 max-w-5xl mx-auto">
-        <div class="flex justify-center py-10" id="loader">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    <header class="bg-indigo-700 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto p-4">
+            <div class="flex justify-between items-center mb-3">
+                <h1 class="text-xl font-bold tracking-tight">Suivi Production</h1>
+                <span id="count" class="bg-indigo-500 text-xs px-2 py-1 rounded-full">Chargement...</span>
+            </div>
+            <div class="relative">
+                <input type="text" id="searchInput" placeholder="Rechercher un client, une ref..." 
+                       class="w-full p-3 pl-10 rounded-xl border-none text-gray-800 shadow-inner focus:ring-2 focus:ring-yellow-400 outline-none">
+                <svg class="w-5 h-5 text-gray-400 absolute left-3 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </div>
         </div>
-        <div id="cards-container" class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3"></div>
-    </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto p-4">
+        <div id="loader" class="flex flex-col items-center justify-center py-20 text-gray-500">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-700 mb-4"></div>
+            <p>Synchronisation avec Google Sheet...</p>
+        </div>
+
+        <div id="cards-container" class="card-grid hidden"></div>
+    </main>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbyzLdvtSTlJmAN_4Lss-5D5-gTdIYlCR2dA-OVS6Xy47DhFkfIcFcWDnFNPq1TbMr3-/exec?action=production";
-        const lienValide = (item.lienDrive && item.lienDrive.toString().startsWith('http')) 
-            ? item.lienDrive 
-            : `https://${item.lienDrive}`;
+        // --- CONFIGURATION ---
+        // REMPLACEZ CETTE URL PAR LA VOTRE (conservez le ?action=production à la fin)
+        const API_URL = "https://script.google.com/macros/s/AKfycbyzLdvtSTlJmAN_4Lss-5D5-gTdIYlCR2dA-OVS6Xy47DhFkfIcFcWDnFNPq1TbMr3-/exec?action=production"; 
 
-async function fetchData() {
-    const loader = document.getElementById('loader');
-    const container = document.getElementById('cards-container');
-    
-    try {
-        console.log("Tentative d'accès à :", API_URL);
-        const response = await fetch(API_URL);
-        
-        if (!response.ok) throw new Error("Erreur réseau");
-        
-        const data = await response.json();
-        console.log("Données reçues :", data);
+        let allData = [];
 
-        if (data.length === 0) {
-            container.innerHTML = "<p class='text-center col-span-full'>Aucune donnée trouvée (Vérifiez les cases cochées en colonne R ou que la ligne 7 n'est pas vide).</p>";
-        } else {
-            renderCards(data);
+        // Fonction pour formater correctement l'URL Drive (évite les erreurs 404)
+        function formatDriveUrl(url) {
+            if (!url || url.toString().trim() === "") return null;
+            let cleanUrl = url.toString().trim();
+            if (!cleanUrl.startsWith('http')) {
+                cleanUrl = 'https://' + cleanUrl;
+            }
+            return cleanUrl;
         }
-    } catch (err) {
-        console.error("Erreur détaillée :", err);
-        container.innerHTML = `<p class='text-red-500 text-center col-span-full'>Erreur : ${err.message}. Vérifiez la console (F12).</p>`;
-    } finally {
-        loader.classList.add('hidden');
-    }
-}
 
-function renderCards(items) {
-    const container = document.getElementById('cards-container');
-    container.innerHTML = items.map(item => `
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-            <div class="flex justify-between items-start mb-3">
-                <span class="font-bold text-blue-800">${item.codemodule || 'Sans nom'}</span>
-                <a href="${item.lienDrive}" target="_blank" class="text-blue-500 text-sm underline">Dossier Drive</a>
-                ${item.lienDrive ? `
-            <a href="${item.lienDrive.toString().startsWith('http') ? item.lienDrive : 'https://' + item.lienDrive}" 
-               target="_blank" 
-               rel="noopener noreferrer"
-               class="text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-colors">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
-                </svg>
-            </a>
-        ` : `<span class="text-gray-300 p-2" title="Pas de lien">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" opacity="0.3"></path></svg>
-             </span>`}
-    </div>
-            </div>
-            <p class="text-sm text-gray-500 mb-3">${item.sousTitre || ''}</p>
-            <div class="flex flex-wrap gap-1 mb-4">
-                ${badge(item.status.enCours, 'En cours', 'yellow')}
-                ${badge(item.status.aControler, 'À contrôler', 'orange')}
-                ${badge(item.status.termine, 'Terminé', 'green')}
-                ${badge(item.status.mail, 'Mail', 'blue')}
-                ${badge(item.status.cmd, 'Cmd', 'purple')}
-                ${badge(item.status.deCote, 'De côté', 'gray')}
-            </div>
+        // Fonction pour créer les badges de statut
+        function getBadge(status, label, colorClass) {
+            if (!status) return '';
+            return `<span class="${colorClass} text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wide">${label}</span>`;
+        }
 
-            <div class="text-xs text-gray-500 border-t pt-2">
-                ${item.refs.filter(r => r !== "").join(' • ')}
-            </div>
-        </div>
-    `).join('');
-}
-// Fonction utilitaire pour générer les badges proprement
-function badge(condition, label, color) {
-    if (!condition) return '';
-    const colors = {
-        yellow: 'bg-yellow-100 text-yellow-800',
-        orange: 'bg-orange-100 text-orange-800',
-        green: 'bg-green-100 text-green-800',
-        blue: 'bg-blue-100 text-blue-800',
-        purple: 'bg-purple-100 text-purple-800',
-        gray: 'bg-gray-100 text-gray-800'
-    };
-    return `<span class="${colors[color]} px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">${label}</span>`;
-}
-fetchData();
+        async function fetchData() {
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                allData = data;
+                renderCards(data);
+                
+                document.getElementById('loader').classList.add('hidden');
+                document.getElementById('cards-container').classList.remove('hidden');
+                document.getElementById('count').textContent = `${data.length} dossiers`;
+            } catch (error) {
+                console.error("Erreur:", error);
+                document.getElementById('loader').innerHTML = `<p class="text-red-500">Erreur de connexion : ${error.message}</p>`;
+            }
+        }
+
+        function renderCards(items) {
+            const container = document.getElementById('cards-container');
+            container.innerHTML = items.map(item => {
+                const driveLink = formatDriveUrl(item.lienDrive);
+                
+                return `
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <h2 class="font-extrabold text-gray-800 text-lg leading-tight uppercase">
+                                ${item.codemodule || 'Sans Nom'}
+                            </h2>
+                            
+                            ${driveLink ? `
+                                <a href="${driveLink}" target="_blank" rel="noopener noreferrer" 
+                                   class="bg-blue-50 p-2 rounded-full text-blue-600 hover:bg-blue-100 transition-colors">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+                                </a>
+                            ` : `<span class="p-2 text-gray-200"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" opacity="0.3"></path></svg></span>`}
+                        </div>
+
+                        <div class="flex flex-wrap gap-1.5 mb-4">
+                            ${getBadge(item.status.enCours, 'En cours', 'bg-yellow-100 text-yellow-700')}
+                            ${getBadge(item.status.aControler, 'À Contrôler', 'bg-orange-100 text-orange-700')}
+                            ${getBadge(item.status.termine, 'Terminé', 'bg-green-100 text-green-700')}
+                            ${getBadge(item.status.mail, 'Mail', 'bg-blue-100 text-blue-700')}
+                            ${getBadge(item.status.cmd, 'Cmd', 'bg-purple-100 text-purple-700')}
+                            ${getBadge(item.status.deCote, 'De Côté', 'bg-gray-200 text-gray-600')}
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-gray-100">
+                        <div class="flex justify-between items-end">
+                            <div class="text-[11px] text-gray-400 font-mono">
+                                LIGNE ${item.id} <br>
+                                ${item.refs.filter(r => r !== "").join(' • ')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        // Logique de recherche
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            const filtered = allData.filter(item => 
+                (item.titrePrincipal && item.titrePrincipal.toString().toLowerCase().includes(val)) ||
+                (item.refs && item.refs.join(' ').toLowerCase().includes(val))
+            );
+            renderCards(filtered);
+            document.getElementById('count').textContent = `${filtered.length} trouvé(s)`;
+        });
+
+        fetchData();
     </script>
 </body>
 </html>
