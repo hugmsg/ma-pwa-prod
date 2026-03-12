@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion de Production</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="manifest" href="/manifest.json">
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+    <nav class="bg-blue-600 p-4 text-white shadow-lg sticky top-0 z-10">
+        <h1 class="text-xl font-bold text-center">Suivi de Production</h1>
+    </nav>
+
+    <div id="app" class="p-4 max-w-5xl mx-auto">
+        <div class="flex justify-center py-10" id="loader">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+        <div id="cards-container" class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3"></div>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbxS_mETz7WywNVItPN6yYvTRT1h0eQfvJGORH54HCPaKeeAYviBzZt1Jhipduqf09ay/exec?action=production";
+
+        async function fetchData() {
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                renderCards(data);
+            } catch (err) {
+                console.error("Erreur de chargement", err);
+            } finally {
+                document.getElementById('loader').classList.add('hidden');
+            }
+        }
+
+        function renderCards(items) {
+            const container = document.getElementById('cards-container');
+            container.innerHTML = items.map(item => `
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-gray-500">Produit #${item.id}</span>
+                        <a href="${item.lienDrive}" target="_blank" class="text-blue-500 hover:text-blue-700">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg>
+                            Photos Drive
+                        </a>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-2 mb-4 text-[10px]">
+                        ${badge(item.status.enCours, 'En cours', 'yellow')}
+                        ${badge(item.status.aControler, 'À Contrôler', 'orange')}
+                        ${badge(item.status.termine, 'Terminé', 'green')}
+                        ${badge(item.status.mail, 'Mail', 'blue')}
+                        ${badge(item.status.cmd, 'CMD', 'purple')}
+                    </div>
+
+                    <div class="border-t pt-3 text-sm text-gray-600">
+                        <p>Refs: ${item.details.join(' | ')}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function badge(status, label, color) {
+            if (!status) return '';
+            return `<span class="px-2 py-1 rounded bg-${color}-100 text-${color}-800 font-bold">${label}</span>`;
+        }
+
+        fetchData();
+    </script>
+</body>
+</html>
